@@ -1,0 +1,66 @@
+// Step 2: Model
+@Entity
+public class ServiceStatus {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private int statusCode;
+
+    // getters and setters
+}
+
+// Step 3: WebClient Bean
+@Configuration
+public class WebClientConfig {
+    @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+}
+
+// Step 4: Service
+@Service
+public class StatusService {
+    private final WebClient.Builder webClientBuilder;
+    private final StatusRepository statusRepository;
+
+    @Autowired
+    public StatusService(WebClient.Builder webClientBuilder, StatusRepository statusRepository) {
+        this.webClientBuilder = webClientBuilder;
+        this.statusRepository = statusRepository;
+    }
+
+    public Mono<ServiceStatus> getStatusAndSave() {
+        return webClientBuilder.build()
+            .get()
+            .uri("https://example.com/api/service")
+            .exchangeToMono(response -> {
+                int statusCode = response.statusCode().value();
+                ServiceStatus serviceStatus = new ServiceStatus();
+                serviceStatus.setStatusCode(statusCode);
+                return statusRepository.save(serviceStatus);
+            });
+    }
+}
+
+// Step 5: Repository
+@Repository
+public interface StatusRepository extends JpaRepository<ServiceStatus, Long> {
+}
+
+// Step 6: Controller or Scheduled Task
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+    private final StatusService statusService;
+
+    @Autowired
+    public ApiController(StatusService statusService) {
+        this.statusService = statusService;
+    }
+
+    @GetMapping("/check-service")
+    public Mono<ServiceStatus> checkServiceAndSave() {
+        return statusService.getStatusAndSave();
+    }
+}
