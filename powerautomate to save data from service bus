@@ -1,0 +1,45 @@
+To subscribe to an Azure topic and save data to an Azure SQL database using Power Automate (formerly known as Microsoft Flow), you can follow these general steps:
+
+1. **Set up Azure Services**:
+   - Ensure you have an Azure account.
+   - Create an Azure Service Bus Topic: This is where messages will be published.
+   - Create an Azure SQL Database: This is where you will store the data.
+
+2. **Create a Logic App**:
+   - Go to the [Power Automate](https://flow.microsoft.com) portal.
+   - Create a new Logic App.
+
+3. **Trigger for Azure Topic**:
+   - Add a trigger that listens to the Azure Service Bus Topic.
+   - You can use the "When a message is received in a topic (Azure Service Bus)" trigger for this purpose.
+   - Configure the connection to your Azure Service Bus and specify the topic.
+
+4. **Action to Save Data to Azure SQL**:
+   - After the trigger, add an action to save data to Azure SQL Database.
+   - Use the "Execute a SQL query (V2)" action for this step.
+   - Configure the connection to your Azure SQL Database.
+   - In the SQL query, write the INSERT statement to insert data into your SQL table based on the message received from the Azure Service Bus Topic.
+
+Here's an example of what the Logic App might look like:
+
+```plaintext
+Trigger: When a message is received in a topic (Azure Service Bus)
+  - Specify the Azure Service Bus connection and topic.
+
+Action: Execute a SQL query (V2)
+  - Specify the Azure SQL Database connection.
+  - Write an INSERT query to save data to your SQL table using the data from the message received from the Azure Service Bus topic.
+
+```
+
+5. **Save and Test**:
+   - Save the Logic App.
+   - Test it by publishing a message to the Azure Service Bus Topic and verifying that it gets saved to the Azure SQL Database.
+
+6. **Monitoring and Error Handling**:
+   - Implement error handling and monitoring as needed for your specific use case.
+   - Configure alerts or logging to be aware of any issues.
+
+Remember to ensure that you have the necessary permissions and configurations set up in Azure, including connection strings, access policies, and SQL database schemas, to make this integration work smoothly.
+
+Please note that this is a high-level overview, and the exact configuration may vary depending on your specific requirements and Azure environment. Make sure to consult Azure documentation and Power Automate documentation for detailed steps and troubleshooting information.
