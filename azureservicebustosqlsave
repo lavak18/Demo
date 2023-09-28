@@ -1,0 +1,103 @@
+String connectionString = "<your-service-bus-connection-string>";
+String topicName = "<your-topic-name>";
+String subscriptionName = "<your-subscription-name>";
+
+ServiceBusProcessorClient processorClient = new ServiceBusClientBuilder()
+    .connectionString(connectionString)
+    .processor()
+    .subscriptionName(subscriptionName)
+    .processMessage(context -> {
+        // Handle incoming messages here
+        System.out.println("Received message: " + context.getMessage().getBody());
+        // Save data to Azure SQL Database
+        saveDataToAzureSQL(context.getMessage().getBody());
+        context.complete();
+    })
+    .buildProcessorClient();
+
+processorClient.start();
+
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+
+// ...
+
+public static void saveDataToAzureSQL(String data) {
+    String jdbcUrl = "<your-azure-sql-jdbc-url>";
+    String username = "<your-azure-sql-username>";
+    String password = "<your-azure-sql-password>";
+
+    try (Connection connection = DriverManager.getConnection(jdbcUrl, username, password)) {
+        String sql = "INSERT INTO YourTable (YourColumn) VALUES (?)";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setString(1, data);
+        preparedStatement.executeUpdate();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+
+<!-- Azure Service Bus -->
+<dependency>
+    <groupId>com.microsoft.azure</groupId>
+    <artifactId>azure-messaging-servicebus</artifactId>
+</dependency>
+
+<!-- Azure SQL Database -->
+<dependency>
+    <groupId>com.microsoft.azure</groupId>
+    <artifactId>azure-spring-boot-starter-sql-db</artifactId>
+</dependency>
+
+<!-- Spring Data JPA -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-jpa</artifactId>
+</dependency>
+
+
+
+# Azure Service Bus
+spring.cloud.azure.servicebus.connection-string=<your-service-bus-connection-string>
+spring.cloud.azure.servicebus.topic-name=<your-topic-name>
+
+# Azure SQL Database
+spring.datasource.url=jdbc:sqlserver://<your-sql-server>.database.windows.net:1433;database=<your-database-name>
+spring.datasource.username=<your-username>
+spring.datasource.password=<your-password>
+
+
+import org.springframework.jms.annotation.JmsListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class MessageReceiver {
+
+    @JmsListener(destination = "<your-topic-name>")
+    public void receiveMessage(String message) {
+        // Process the message and save data to Azure SQL using Spring Data JPA
+        // Example: Create an entity and use JpaRepository to save it
+    }
+}
+
+
+@Component
+public class MessageReceiver {
+    private final YourEntityRepository repository;
+
+    @Autowired
+    public MessageReceiver(YourEntityRepository repository) {
+        this.repository = repository;
+    }
+
+    @JmsListener(destination = "<your-topic-name>")
+    public void receiveMessage(String message) {
+        // Process the message and save data to Azure SQL using Spring Data JPA
+        YourEntity entity = new YourEntity();
+        entity.setData(message);
+        repository.save(entity);
+    }
+}
