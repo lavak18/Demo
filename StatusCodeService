@@ -1,0 +1,24 @@
+@Service
+public class StatusCodeService {
+    private final StatusCodeRepository statusCodeRepository;
+    private final WebClient webClient;
+
+    @Autowired
+    public StatusCodeService(StatusCodeRepository statusCodeRepository, WebClient.Builder webClientBuilder) {
+        this.statusCodeRepository = statusCodeRepository;
+        this.webClient = webClientBuilder.baseUrl("https://external-service-url.com").build();
+    }
+
+    public Mono<StatusCode> hitServiceAndGetStatusCode(String value) {
+        return webClient.get()
+            .uri("/endpoint?param=" + value)
+            .retrieve()
+            .onStatus(HttpStatus::isError, clientResponse -> Mono.error(new RuntimeException("Request failed")))
+            .bodyToMono(Void.class)
+            .thenReturn(new StatusCode());
+    }
+
+    public void saveStatusCode(StatusCode statusCode) {
+        statusCodeRepository.save(statusCode);
+    }
+}
