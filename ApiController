@@ -1,0 +1,17 @@
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+    private final StatusCodeService statusCodeService;
+
+    @Autowired
+    public ApiController(StatusCodeService statusCodeService) {
+        this.statusCodeService = statusCodeService;
+    }
+
+    @GetMapping("/hit-service")
+    public Flux<StatusCode> hitServiceMultipleTimes(@RequestParam List<String> values) {
+        return Flux.fromIterable(values)
+            .flatMap(value -> statusCodeService.hitServiceAndGetStatusCode(value)
+                .doOnNext(statusCodeService::saveStatusCode));
+    }
+}
